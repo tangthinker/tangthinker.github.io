@@ -16,7 +16,7 @@ googleAnalytics = ""  # UA-XXXXXXXX-X
 copyright = ""        # default: params.author.name ↓ # 默认为下面配置的params.author.name ↓
 
 # language support # en / zh-cn / other... translations present in i18n/
-defaultContentLanguage = "zh-cn" # Default language to use
+defaultContentLanguage = "en" # Default language to use
 [languages.en]
 languageCode = "en"
 
