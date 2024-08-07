@@ -72,8 +72,10 @@ contentCopyright = '<a rel="license noopener" href="https://creativecommons.org/
 
 # Link custom CSS and JS assets
 #   (relative to /static/css and /static/js respectively)
-customCSS = [] # if ['custom.css'], load '/static/css/custom.css' file
-customJS = []  # if ['custom.js'], load '/static/js/custom.js' file
+customCSS = [
+  'custom.css',
+] # if ['custom.css'], load '/static/css/custom.css' file
+customJS = [] # if ['custom.js'], load '/static/js/custom.js' file
 
 [params.social] # 社交链接
 a-email = "mailto:tangthinker@yeah.net"

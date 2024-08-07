@@ -1,0 +1,14 @@
+
+@font-face{
+    font-family: 'hwzs';
+    src: url('./hw-zs.ttf');
+}
+
+@font-face{
+    font-family: 'source-code-pro';
+    src: url('./source-code-pro.ttf');
+}
+
+body{
+    font-family: 'hwzs', source-code-pro;;
+}
