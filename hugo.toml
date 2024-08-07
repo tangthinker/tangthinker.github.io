@@ -28,6 +28,11 @@ changefreq = "weekly"
 priority = 0.5
 filename = "sitemap.xml"
 
+# 代码块高亮样式
+[markup]
+[markup.highlight]
+style = 'paraiso-light'
+
 [[menu.main]] # config your menu              # 配置目录
 name = "Home"
 weight = 10
