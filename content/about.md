@@ -1,24 +1,24 @@
 ---
 title: "About"
-date: 2017-08-20T21:38:52+08:00
-lastmod: 2017-08-28T21:41:52+08:00
+date: 2024-08-08T01:12:52+08:00
+lastmod: 2024-08-08T01:12:52+08:00
 menu: "main"
-weight: 50
+weight: 100
 
 # you can close something for this content if you open it in config.toml.
 comment: false
 mathjax: false
 ---
 
-Hugo is a static site engine written in Go.
+#### Habbit
 
+- 喜欢羽毛球
+- 喜欢programing
+- 喜欢阅读
+- 喜欢旅行
 
-It makes use of a variety of open source projects including:
+#### Hated
 
-* [Cobra](https://github.com/spf13/cobra)
-* [Viper](https://github.com/spf13/viper)
-* [J Walter Weatherman](https://github.com/spf13/jWalterWeatherman)
-* [Cast](https://github.com/spf13/cast)
-
-Learn more and contribute on [GitHub](https://github.com/gohugoio).
-
+- 不喜欢孤独
+- 不喜欢早起
+- 不喜欢重复
