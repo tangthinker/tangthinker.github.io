@@ -45,16 +45,12 @@ name = "Categories"
 weight = 40
 identifier = "categories"
 pageref = "/categories/"
-[[menu.main]]
-name = "external-link"
-weight = 50
-pageref = "https://gohugo.io"
 
 
 [params]
 since = "2024"          # Site creation time          # 站点建立时间
 homeFullContent = false # if false, show post summaries on home page. Otherwise show full content.
-rssFullContent = true   # if false, Rss feed instead of the summary
+rssFullContent = false  # if false, Rss feed instead of the summary
 
 author.name = "Tangthinker"           # essential                     # 必需
 author.email = "tangthinker@yeah.net" # optional, for RSS             # 可选
