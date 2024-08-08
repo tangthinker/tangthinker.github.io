@@ -10,6 +10,19 @@ comment: false
 mathjax: false
 ---
 
+#### Intro
+
+- 2024年8月8日，我建立了这个博客，记录我的生活，分享我的知识。
+
+#### Interests
+
+- Golang
+- C++
+- Java
+- Storage
+- Distributed System
+
+
 #### Habbit
 
 - 喜欢羽毛球
