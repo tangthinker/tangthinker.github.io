@@ -9,14 +9,14 @@
     src: url('./source-code-pro.ttf');
 }
 
-body{
+* {
     font-family: 'hwzs', source-code-pro;;
 }
 
-.post-title {
+/* .post-title {
     font-family: 'hwzs', source-code-pro;;
 }
 
 .logo {
     font-family: source-code-pro;;
-}
+} */
