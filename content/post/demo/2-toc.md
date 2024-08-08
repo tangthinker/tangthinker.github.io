@@ -15,10 +15,6 @@ categories: [
     "index",
 ]
 
-menu:
-  main:
-    parent: "demo"
-    weight: 2
 ---
 
 ## Header

@@ -17,10 +17,6 @@ katex: true
 # See https://github.com/mmarkdown/mmark
 markup: mmark
 
-menu:
-  main:
-    parent: "demo"
-    weight: 5
 ---
 
 [KaTeX and MathJax Comparison Demo, currently processed as KaTeX](https://www.intmath.com/cg5/katex-mathjax-comparison.php)

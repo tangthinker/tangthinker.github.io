@@ -14,10 +14,7 @@ categories: [
     "index",
 ]
 
-menu:
-  main:
-    parent: "docs"
-    weight: 2
+
 ---
 
 ## Contributing to Jane

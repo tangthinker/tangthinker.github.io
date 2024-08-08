@@ -6,10 +6,6 @@ draft: false
 tags: ["preview", "shortcodes", "tag-6"]
 categories: ["demo", "shortcodes", "index"]
 
-menu:
-  main:
-    parent: "demo"
-    weight: 6
 ---
 
 ## normal use
