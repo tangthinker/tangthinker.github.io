@@ -9,6 +9,7 @@ weight: 100
 comment: false
 mathjax: false
 author-info: false
+contentCopyright: false
 
 ---
 

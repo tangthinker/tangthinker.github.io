@@ -3,7 +3,7 @@ title: "Redis 01 Data Structure"
 date: 2024-08-09T14:15:48+08:00
 lastmod: 2024-08-09T14:15:48+08:00
 draft: false
-keywords: ["redis", ""]
+keywords: ["redis", "data structure"]
 description: "Redis数据结构介绍"
 tags: []
 categories: ["redis"]
@@ -29,6 +29,7 @@ mathjax: false
 ---
 
 <!--more-->
+
 
 ## Redis 五种数据类型
 
@@ -85,3 +86,151 @@ Redis为了解决rehash过程中线程阻塞的问题，采用了渐进式rehash
 这样，在rehash的过程中，哈希表1和哈希表2会同时存在，哈希表1中的键值对会逐渐迁移到哈希表2中。
 
 ![Redis渐进式rehash](/img/redis/01/rehash.png)
+
+
+## Redis底层数据结构
+
+### SDS 简单动态字符串
+
+Redis的字符串是使用SDS（Simple Dynamic String）来实现的。
+
+SDS的结构如下：
+
+```c
+struct sdshdr {
+    int len; // 记录buf数组中已使用字节的数量，等于SDS所保存字符串的长度
+    int free; // 记录buf数组中未使用字节的数量
+    char buf[]; // 字节数组，用于保存字符串
+};
+```
+
+SDS与C语言中的字符串相比，有以下优点：
+
+1. 获取字符串长度的时间复杂度为O(1)，而C语言中的字符串需要遍历整个字符串。
+2. SDS可以自动扩容，而C语言中的字符串需要手动分配内存。
+3. SDS可以存储二进制数据，而C语言中的字符串只能存储文本数据。
+
+
+
+### 双端链表
+
+Redis的列表是使用双端链表来实现的。
+
+双端链表的结构如下：
+
+```c
+typedef struct listNode {
+    struct listNode *prev;
+    struct listNode *next;
+    void *value;
+} listNode;
+
+typedef struct list {
+    listNode *head;
+    listNode *tail;
+    unsigned long len;
+    void *(*dup)(void *ptr);
+    void (*free)(void *ptr);
+    int (*match)(void *ptr, void *key);
+} list;
+```
+
+双端链表的特点如下：
+
+1. 双端链表可以快速地插入和删除节点。
+2. 双端链表可以快速地获取头节点和尾节点。
+3. 双端链表可以快速地获取链表的长度。
+
+### 字典
+
+Redis的字典是使用哈希表来实现的。
+
+哈希表的结构如下：
+```c
+typedef struct dictEntry {
+    void *key;
+    union {
+        void *val;
+        uint64_t u64;
+        int64_t s64;
+    } v;
+    struct dictEntry *next;
+} dictEntry;
+
+typedef struct dict {
+    dictType *type;
+    void *privdata;
+    dictht ht[2];
+    long rehashidx; /* rehashing not in progress if rehashidx == -1 */
+    unsigned long iterators; /* number of iterators currently running */
+} dict;
+```
+
+字典的特点如下：
+
+1. 字典可以快速地查找、插入和删除键值对。
+2. 字典可以自动扩容和缩容。
+3. 字典可以处理哈希冲突。
+
+
+### ziplist 压缩列表
+
+Redis的列表和哈希表在数据量较小的时候，会使用压缩列表来存储。
+
+压缩列表的结构如下：
+
+```c
+typedef struct zlentry {
+    unsigned int prevrawlensize; /* Bytes used to encode the previous entry len*/
+    unsigned int prevrawlen;     /* Previous entry len. */
+    unsigned int lensize;        /* Bytes used to encode this entry len. */
+    unsigned int len;            /* This entry len. */
+    unsigned int headersize;     /* prevrawlensize + lensize. */
+    unsigned char encoding;      /* Entry encoding (4 bits). */
+    unsigned char *p;            /* Pointer to the entry. */
+} zlentry;
+```
+
+压缩列表的特点如下：
+
+1. 压缩列表可以节省内存空间。
+2. 压缩列表可以快速地插入和删除节点。
+3. 压缩列表可以快速地获取头节点和尾节点。
+4. 压缩列表可以快速地获取链表的长度。
+
+
+### 跳表
+
+Redis的有序集合是使用跳表来实现的。
+
+跳表的结构如下：
+
+```c
+typedef struct zskiplistNode {
+    sds ele;
+    double score;
+    struct zskiplistNode *backward;
+    struct zskiplistLevel {
+        struct zskiplistNode *forward;
+        unsigned long span;
+    } level[];
+} zskiplistNode;
+
+typedef struct zskiplist {
+    struct zskiplistNode *header, *tail;
+    unsigned long length;
+    int level;
+} zskiplist;
+```
+
+跳表的特点如下：
+
+
+1. 跳表可以快速地查找、插入和删除节点。
+2. 跳表可以快速地获取头节点和尾节点。
+3. 跳表可以快速地获取链表的长度。
+4. 跳表可以处理哈希冲突。
+
+实际上跳表就是在数组的基础上，增加多级索引，从而提高查找效率。
+
+![跳表](/img/redis/01/skiplist.png)
