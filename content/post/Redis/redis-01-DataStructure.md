@@ -116,6 +116,10 @@ SDS与C语言中的字符串相比，有以下优点：
 
 Redis的列表是使用双端链表来实现的。
 
+Redis中列表使用两种数据结构作为底层实现：ziplist和linkedlist。
+
+因为双端列表占用内存比压缩列表多，所以在创建新的列表键是，列表会优先使用ziplist作为底层实现，当元素个数超过512个，或者单个元素超过64字节时，会使用linkedlist作为底层实现。
+
 双端链表的结构如下：
 
 ```c
@@ -123,25 +127,45 @@ typedef struct listNode {
     struct listNode *prev;
     struct listNode *next;
     void *value;
+    // value类型为void*，可以存储任意类型的数据
 } listNode;
 
 typedef struct list {
-    listNode *head;
-    listNode *tail;
-    unsigned long len;
-    void *(*dup)(void *ptr);
-    void (*free)(void *ptr);
-    int (*match)(void *ptr, void *key);
+    listNode *head;                 // 表头指针
+    listNode *tail;                 // 表尾指针
+    unsigned long len;              // 节点数量
+    void *(*dup)(void *ptr);        // 复制节点值函数
+    void (*free)(void *ptr);        // 释放节点值函数    删除节点时调用
+    int (*match)(void *ptr, void *key); // 对比节点值和输入值函数
 } list;
 ```
 
 双端链表的特点如下：
 
-1. 双端链表可以快速地插入和删除节点。
-2. 双端链表可以快速地获取头节点和尾节点。
-3. 双端链表可以快速地获取链表的长度。
+1. 节点带有prev和next指针，可以进行双向遍历。
+2. List保存了head和tail两个指针，因此对表头和表尾的插入和删除操作复杂度为O(1)。 这是实现高效的**LPUSH、LPOP、RPUSH、RPOP**操作的重要保证。
+3. List保存了len属性，因此计算列表长度的时间复杂度为O(1)。这是实现高效的**LLEN**操作的重要保证。
+4. List使用dup、free、match三个函数指针，可以用于复制、释放、对比节点值，从而实现多态。
 
-### 字典
+双端列表迭代器
+
+Redis为双端列表实现了一个迭代器，迭代器可以从两个方向对双端列表进行迭代。
+
+迭代器的结构如下：
+
+```c
+typedef struct listIter {
+    listNode *next; // 下一个节点
+    int direction; // 迭代方向
+} listIter;
+```
+
+- 可以沿着节点的next指针，从表头向表尾迭代。 direction为adlist.h/AL_START_HEAD
+- 可以沿着节点的prev指针，从表尾向表头迭代。 direction为adlist.h/AL_START_TAIL
+
+
+
+### 字典/Map/哈希表
 
 Redis的字典是使用哈希表来实现的。
 
