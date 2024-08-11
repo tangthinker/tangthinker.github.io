@@ -167,35 +167,74 @@ typedef struct listIter {
 
 ### 字典/Map/哈希表
 
-Redis的字典是使用哈希表来实现的。
+Redis中广泛应用字典/Map，主要有以下两个用途：
 
-哈希表的结构如下：
+1. 实现数据库键空间（ key space ）。
+2. 用作Hash类型键的底层实现之一。
+
+Hash类型使用字典和ziplist作为底层实现，因为压缩列表比字典占用内存更少，所以在创建新的Hash键时，会优先使用ziplist作为底层实现，当有需要时，才会使用字典作为底层实现。
+
+字典实现方式有多种：
+
+1. 简单实用链表或数组实现，适用于元素个数不多的情况。
+2. 兼顾高效和简单性，可使用哈希表实现字典。
+3. 如追求更为稳定的性能特征，并能高效的实现排序操作，可使用更为复杂的平衡树实现。
+
+字典的结构定义如下：
+```c
+
+// 每个字典使用两个哈希表，用于实现渐进式rehash
+typedef struct dict {
+    dictType *type;         // 特定于类型的处理函数
+    void *privdata;         // 特定于类型的处理函数私有数据
+    dictht ht[2];           // 哈希表（ 2个 ）
+    long rehashidx;         // 记录rehash进度的标志，值为-1 表示rehash未进行
+    unsigned long iterators;  // 当前正在运行的安全迭代器数量
+} dict;
+
+```
+
+字典所使用的哈希表实现类型的定义如下：
+```c
+typedef struct dictht {
+    dictEntry **table;       // 哈希表节点指针数组（ 俗称桶 bucket）数组每个元素指向一个dictEntry结构
+    size_t size;             // 指针数组的大小
+    unsigned long size;      // 指针数组的大小
+    unsigned long sizemask;  // 指针数组的长度掩码，用于计算索引值
+    unsigned long used;      // 哈希表现有的节点数量
+} dictht;
+```
+
+哈希表节点（ dictEntry ）结构定义如下：
 ```c
 typedef struct dictEntry {
-    void *key;
+    void *key;              // 键
     union {
-        void *val;
+        void *val;          // 值
         uint64_t u64;
         int64_t s64;
+        double d;
     } v;
-    struct dictEntry *next;
+    struct dictEntry *next;  // 指向下一个哈希表节点，形成链表
 } dictEntry;
-
-typedef struct dict {
-    dictType *type;
-    void *privdata;
-    dictht ht[2];
-    long rehashidx; /* rehashing not in progress if rehashidx == -1 */
-    unsigned long iterators; /* number of iterators currently running */
-} dict;
 ```
+
+next指针指向另一个dictEntry结构，从而形成链表，可以看出，dictht使用**链地址法解决哈希冲突**。
+
+当多个不同的键拥有相同的哈希值时，哈希表使用一个链表将这些键连接起来。
+
+字典的哈希表实现如下图所示：
+
+![字典哈希表实现](/img/redis/01/dict-hash.png)
+
 
 字典的特点如下：
 
-1. 字典可以快速地查找、插入和删除键值对。
-2. 字典可以自动扩容和缩容。
-3. 字典可以处理哈希冲突。
-
+1. Redis中数据库键空间和哈希键类型都是基于字典来实现的。
+2. Redis字典的底层实现为哈希表，每个字典使用两个哈希表，一般情况只使用0号哈希表，rehash的过程中才会同时使用两个哈希表。
+3. Redis字典的哈希表使用链地址法解决哈希冲突。
+4. Rehash可以用于扩展和收缩哈希表。
+5. 对哈希表的rehash是分多次、渐进式的进行的。
 
 ### ziplist 压缩列表
 
