@@ -43,7 +43,6 @@ style = "doom-one"
 tabWidth = 4
 
 
-
 [[menu.main]] # config your menu              # 配置目录
 name = "文章"
 weight = 10
@@ -56,7 +55,7 @@ identifier = "archives"
 pageref = "/post/"
 [[menu.main]]
 name = "分类"
-weight = 40
+weight = 20
 identifier = "categories"
 pageref = "/categories/"
 

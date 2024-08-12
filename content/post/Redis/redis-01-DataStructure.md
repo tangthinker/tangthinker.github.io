@@ -6,6 +6,7 @@ draft: false
 keywords: ["redis", "data structure"]
 description: "Redis数据结构介绍"
 tags: []
+
 categories: ["redis"]
 author: "Tangthinker"
 
@@ -228,7 +229,7 @@ next指针指向另一个dictEntry结构，从而形成链表，可以看出，d
 ![字典哈希表实现](/img/redis/01/dict-hash.png)
 
 
-字典的特点如下：
+字典总结：
 
 1. Redis中数据库键空间和哈希键类型都是基于字典来实现的。
 2. Redis字典的底层实现为哈希表，每个字典使用两个哈希表，一般情况只使用0号哈希表，rehash的过程中才会同时使用两个哈希表。
@@ -236,20 +237,116 @@ next指针指向另一个dictEntry结构，从而形成链表，可以看出，d
 4. Rehash可以用于扩展和收缩哈希表。
 5. 对哈希表的rehash是分多次、渐进式的进行的。
 
+
+### 跳表
+
+Redis的有序集合是使用跳表来实现的。
+
+维基百科中跳表示意图：
+![跳表](/img/redis/01/skiplist-wiki.png)
+
+可以看出跳跃表主要由以下部分构成：
+
+1. 表头（head）：负责维护跳跃表的节点指针。
+2. 层：保存着指向其他元素的指针。高层的指针越过的元素数量大于等于底层指针，为保证查找效率，程序总是从高层开始访问，然后缩小元素值范围，慢慢降低层次。
+3. 表尾：全部由NULL节点构成，表示跳跃表的尾部。
+4. 节点：保存着元素值，以及多个层。
+
+跳表的结构如下：
+
+```c
+
+typedef struct zskiplist {
+    // 头节点   尾节点
+    struct zskiplistNode *header, *tail;
+    // 节点数量
+    unsigned long length;
+    // 目前表中层数最大的节点的层数
+    int level;
+} zskiplist;
+
+typedef struct zskiplistNode {
+    // 元素value
+    sds ele;
+    // 元素score
+    double score;
+    // 后退指针
+    struct zskiplistNode *backward;
+
+    // 层
+    struct zskiplistLevel {
+
+        // 前进指针
+        struct zskiplistNode *forward;
+
+        // 这个层跨越的节点数量
+        unsigned long span;
+    } level[];
+} zskiplistNode;
+```
+
+跳表按照以上结构创建的示意图：
+![跳表](/img/redis/01/skiplist-real.png)
+
+跳表的特点如下：
+
+1. 跳表是一种有序的数据结构，支持快速的查找、插入和删除操作。
+2. 跳表的平均时间复杂度为O(logN)，最坏时间复杂度为O(N) - 逐个遍历。
+3. 每个节点带有高度为1层的后退指针，用于从表尾向表头遍历。
+
+实际上跳表就是在数组的基础上，**增加多级索引**，从而提高查找效率。
+
+![跳表](/img/redis/01/skiplist.png)
+
+
 ### ziplist 压缩列表
 
-Redis的列表和哈希表在数据量较小的时候，会使用压缩列表来存储。
+Redis的列表、哈希表、有序集合在数据量较小的时候，会使用压缩列表来存储。
 
-压缩列表的结构如下：
+ziplist由一系列特殊编码的内存块构成的列表，每个节点可以保存一个长度受限的字符数组或者整数。
+
+ziplist典型的分布结构：
+
+``` 
+area        |<---- ziplist header ---->|<----------- entries ------------->|<-end->|
+
+size          4 bytes  4 bytes  2 bytes    ?        ?        ?        ?     1 byte
+            +---------+--------+-------+--------+--------+--------+--------+-------+
+component   | zlbytes | zltail | zllen | entry1 | entry2 |  ...   | entryN | zlend |
+            +---------+--------+-------+--------+--------+--------+--------+-------+
+                                       ^                          ^        ^
+address                                |                          |        |
+                                ZIPLIST_ENTRY_HEAD                |   ZIPLIST_ENTRY_END
+                                                                  |
+                                                         ZIPLIST_ENTRY_TAIL
+```
+
+其中：
+
+- zlbytes：记录整个压缩列表占用的内存字节数。在ziplist内存重新分配和计算末端时使用。
+- zltail：到达ziplist尾部的偏移量，通过这个偏移量，可在不遍历整个ziplist的条件下快速定位到尾节点。
+- zllen：ziplist中节点的数量。当ziplist节点数量小于UINT16_MAX时，这个值就是节点数量；当这个值是UINT16_MAX，需要遍历整个ziplist才能获取节点数量。
+- entryX：压缩列表的各个节点，节点的长度由节点保存的内容决定。
+- zlend：特殊值0xFF（十进制255 二进制1111 1111），用于标记压缩列表的末端。
+
+
+压缩单个节点的结构如下：
 
 ```c
 typedef struct zlentry {
+    // 保存前一节点的长度所需的长度
     unsigned int prevrawlensize; /* Bytes used to encode the previous entry len*/
+    // 前一节点的长度
     unsigned int prevrawlen;     /* Previous entry len. */
+    // 保存节点的长度所需要的长度
     unsigned int lensize;        /* Bytes used to encode this entry len. */
+    // 节点长度
     unsigned int len;            /* This entry len. */
+    // header长度
     unsigned int headersize;     /* prevrawlensize + lensize. */
+    // 编码方式
     unsigned char encoding;      /* Entry encoding (4 bits). */
+    // 节点内容
     unsigned char *p;            /* Pointer to the entry. */
 } zlentry;
 ```
@@ -257,43 +354,4 @@ typedef struct zlentry {
 压缩列表的特点如下：
 
 1. 压缩列表可以节省内存空间。
-2. 压缩列表可以快速地插入和删除节点。
-3. 压缩列表可以快速地获取头节点和尾节点。
-4. 压缩列表可以快速地获取链表的长度。
-
-
-### 跳表
-
-Redis的有序集合是使用跳表来实现的。
-
-跳表的结构如下：
-
-```c
-typedef struct zskiplistNode {
-    sds ele;
-    double score;
-    struct zskiplistNode *backward;
-    struct zskiplistLevel {
-        struct zskiplistNode *forward;
-        unsigned long span;
-    } level[];
-} zskiplistNode;
-
-typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;
-    unsigned long length;
-    int level;
-} zskiplist;
-```
-
-跳表的特点如下：
-
-
-1. 跳表可以快速地查找、插入和删除节点。
-2. 跳表可以快速地获取头节点和尾节点。
-3. 跳表可以快速地获取链表的长度。
-4. 跳表可以处理哈希冲突。
-
-实际上跳表就是在数组的基础上，增加多级索引，从而提高查找效率。
-
-![跳表](/img/redis/01/skiplist.png)
+2. 添加和删除ziplist节点可以会引起连锁更新，因而最坏时间复杂度为O(N^2)，不过出现概率不是很高，可以将添加和删除视为O(N)。
