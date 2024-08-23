@@ -57,7 +57,7 @@ OAuth2.0是一种授权框架，它允许第三方应用程序获取有限的访
 - 此时用户请求我，需要使用到 third-part-service 的资源，此时我需要向 third-part-service 请求授权, 获取授权码
 - 然后使用授权码获取访问令牌，最后使用访问令牌访问 third-part-service 的资源。
 
-1. 微信OAuth2.0授权码模式
+2. 微信OAuth2.0授权码模式
 
 ![Wechat-OAuth2.0](/img/random/oauth-weixin.png)
 
