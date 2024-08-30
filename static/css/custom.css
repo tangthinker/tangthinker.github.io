@@ -9,7 +9,11 @@
     src: url('./source-code-pro.ttf');
 }
 
-* {
+.post-content {
+    font-family: 'hwzs', source-code-pro;;
+}
+
+.logo-wrapper {
     font-family: 'hwzs', source-code-pro;;
 }
 

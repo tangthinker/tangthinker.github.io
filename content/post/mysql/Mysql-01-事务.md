@@ -154,7 +154,7 @@ show engine innodb status;
 
 上面介绍的是排他锁（写锁）之外，MySQL还有共享锁（读锁）。
 
-#### 脏读、不可重复读、幻读 And 事务隔离级别（读未提交、读已提交、可重复读、串行化）
+#### 脏读、不可重复读、幻读
 
 1. 脏读（Dirty Read）：一个事务读到了另一个事务未提交的数据。
     ![脏读](/img/mysql/dirty-read.png)
@@ -164,7 +164,7 @@ show engine innodb status;
     ![幻读](/img/mysql/phantom-read.png)
 
 
-事务隔离级别：
+#### 事务隔离级别（读未提交、读已提交、可重复读、串行化）
 
 ![事务隔离级别](/img/mysql/isolation-level.png)
 
@@ -213,6 +213,5 @@ trx_sys中主要内容、判断可见性的方法：
 
 # 参考文章
 
-[深入学习MySQL事务：ACID特性的实现原理](https://www.cnblogs.com/kismetv/p/10331633.html
-)
+[深入学习MySQL事务：ACID特性的实现原理](https://www.cnblogs.com/kismetv/p/10331633.html)
 
