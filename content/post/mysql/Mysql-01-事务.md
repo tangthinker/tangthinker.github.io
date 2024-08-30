@@ -141,8 +141,64 @@ InnoDB支持两种锁：行锁（row-level locking）和表锁（table-level loc
 可以通过以下方式查看InnoDB中锁的情况：
 
 ```SQL
-select * from information_schema.innodb_locks; #锁的概况
-show engine innodb status; #InnoDB整体状态，其中包括锁的情况
+
+#锁的概况
+
+select * from information_schema.innodb_locks; 
+
+#InnoDB整体状态，其中包括锁的情况
+
+show engine innodb status; 
+
 ```
 
 上面介绍的是排他锁（写锁）之外，MySQL还有共享锁（读锁）。
+
+#### 脏读、不可重复读、幻读 And 事务隔离级别（读未提交、读已提交、可重复读、串行化）
+
+1. 脏读（Dirty Read）：一个事务读到了另一个事务未提交的数据。
+    ![脏读](/img/mysql/dirty-read.png)
+2. 不可重复读（Non-Repeatable Read）：一个事务在同一个事务中多次读取同一数据时，会看到同样的数据行，但是数据被其他事务修改了。
+    ![不可重复读](/img/mysql/non-repeatable-read.png)
+3. 幻读（Phantom Read）：一个事务在同一个事务中多次读取同一数据时，**会看到不一样的数据行，因为其他事务插入了新的行。**
+    ![幻读](/img/mysql/phantom-read.png)
+
+
+事务隔离级别：
+
+![事务隔离级别](/img/mysql/isolation-level.png)
+
+在实际应用中，**读未提交**在并发时会出现很多问题，但是**性能相对于其他隔离级别提高的又很有限**，所以使用较少。
+
+**可串行化**强制事务串行，并发效率很低，**只有对数据一致性要求极高时并且可以介绍没有并发时**，才使用。
+
+大多数数据库系统中，默认隔离界别时**读已提交**(Oracle)或**可重复读**(InnoDB)。
+
+
+#### MVCC 多版本并发控制
+
+Repeated Read（可重复读）解决脏读、不可重复读、幻读，是通过MVCC来实现的。
+
+
+MVCC（Multi-Version Concurrency Control）是InnoDB存储引擎的一种事务隔离级别，通过保存数据在某个时间点的快照来实现。
+
+下面这个例子体现了MVCC对特点：在同一时刻，不同事务读取到的数据可能是不同的。
+
+![MVCC](/img/mysql/mvcc.png)
+
+MVCC的优势是读取不加锁，因此读写不冲突，并发性能好。InnoDB实现MVCC，多个版本的数据可以共存，主要基于以下技术和数据结构：
+
+1. 隐藏列：InnoDB中每行数据都有隐藏列，**隐藏列中包含了本行数据的事务id、指向undo log的指针等。**
+2. 基于undo log的版本链：隐藏列中包含的指向undo log指针，**而每条undo log也会指向更早版本的undo log，从而形成版本链。**
+3. ReadView：通过隐藏列和版本链，MySQL可以讲数据恢复到指定的奔波；具体要恢复到哪个版本，则需要根据ReadView来确定。所谓ReadView，是指事务在某一时刻给整个事务系统（trx_sys）打的快照，之后进行读取操作，会讲读取到的数据中的事务id与trx_sys快照进行比较，从而半段数据对该ReadView是否可见，即对该事务可见。
+
+trx_sys中主要内容、判断可见性的方法：
+
+1. low_limit_id：生成ReadView时系统中应该分配给下一个事务的id，如果数据的事务id大于等于low_limit_id，则对该ReadView不可见。
+2. up_limit_id：生成ReadView时系统中活跃的读写事务中最小的事务id，如果数据的事务id小于up_limit_id，则对该ReadView可见。
+3. rw_trx_ids: 生成ReadView时当前系统中活跃的读写事务的事务id列表。如果事务id在low_limit_id和up_limit_id之间，则需要判断事物id是否在rw_trx_ids中，如果在，说明生成ReadView时事务仍然活跃，因此数据对该ReadView不可见；如果不在，说明生成ReadView时事务已经提交了，因此对该ReadView可见。
+
+
+
+
+
