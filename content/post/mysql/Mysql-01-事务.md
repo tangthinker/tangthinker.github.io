@@ -211,4 +211,8 @@ trx_sys中主要内容、判断可见性的方法：
 除了数据库层面的保障，一致性还需要应用层面的保障。
 
 
+# 参考文章
+
+[深入学习MySQL事务：ACID特性的实现原理](https://www.cnblogs.com/kismetv/p/10331633.html
+)
 
