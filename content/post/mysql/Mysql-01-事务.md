@@ -97,3 +97,11 @@ InnoDB作为存储引擎，数据存放在磁盘中，但是如果每次读写�
 1. 刷脏是随机IO，因为每次修改数据的位置是随机的。而redo log是顺序IO，属于顺序IO，写入性能更高。
 2. 刷脏是以数据页（page）为单位，MySQL默认页面大小为16KB，一个page的小修改都要整页写入。而redo log只包含真正需要写入的部分，无效IO大大减少。
 
+
+### redo log与binlog的区别
+
+1. 功能不同：redo log用于保障crash recovery，保证MySQL宕机也不影响持久性。binlog用于point-in-time recovery，保证服务器可以基于时间点进行数据恢复，还可以用于主从复制。
+2. 层次不同：redo log是InnoDB引擎层面的，binlog是MySQL服务器层面的。
+3. 内容不同：redo log是物理日志，内容基于磁盘的page；binlog的内容是二进制的，根据binlog_format参数的不同，可能基于sql语句、基于数据本身或者二者的混合。
+4. 写入时机不同： binlog在事务提交时写入，redo log写入时机：a. 事务提交时调用fsync对redo log进行刷盘； b. master thread每隔一段时间将redo log写入磁盘。
+
