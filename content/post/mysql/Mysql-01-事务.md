@@ -199,6 +199,8 @@ trx_sys中主要内容、判断可见性的方法：
 3. rw_trx_ids: 生成ReadView时当前系统中活跃的读写事务的事务id列表。如果事务id在low_limit_id和up_limit_id之间，则需要判断事物id是否在rw_trx_ids中，如果在，说明生成ReadView时事务仍然活跃，因此数据对该ReadView不可见；如果不在，说明生成ReadView时事务已经提交了，因此对该ReadView可见。
 
 
+![MVCC流程图](/img/mysql/tx_sys.png)
+
 
 
 
