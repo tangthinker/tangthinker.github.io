@@ -8,7 +8,7 @@ keywords: ["mysql", "acid"]
 description: "mysql事务"
 tags: []
 
-categories: ["redis"]
+categories: ["mysql"]
 author: "Tangthinker"
 
 # Uncomment to pin article to front page
