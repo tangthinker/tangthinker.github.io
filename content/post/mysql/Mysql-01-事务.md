@@ -1,5 +1,5 @@
 ---
-title: "MySQL 01 事务"
+title: "MySQL 事务"
 subtitle: ""
 date: 2024-08-09T14:15:48+08:00
 lastmod: 2024-08-09T14:15:48+08:00
