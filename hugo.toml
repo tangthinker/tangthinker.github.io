@@ -70,7 +70,7 @@ author.email = "tangthinker@yeah.net" # optional, for RSS             # 可选
 author.url = "/about"                 # optional                      # 可选
 
 # site info (optional)                                  # 站点信息（可选，不需要的可以直接注释掉）
-logoTitle = "唐思杰"                                                 # default: the title value    # 默认值: 上面设置的title值
+logoTitle = "TangThinker"                                                 # default: the title value    # 默认值: 上面设置的title值
 keywords = ["tangthinker", "唐思杰", "golang", "programing", "blog"]
 description = "Tangthinker - 唐思杰"
 
