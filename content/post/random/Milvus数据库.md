@@ -67,3 +67,16 @@ Milvus本身是完全无状态的声音可以很容易的借助Kubernetes或者�
 6. Reranking： 基于额外的标准或算法对搜索结果进行重排序，改善最初的ANN Search结果。
 7. Fetch： 基于主键取回数据。
 8. Query： 使用特定搜索表达式取回数据。
+
+解释：
+
+ANN Search： 即Approximate Nearest Neighbor Search，是一种基于向量空间的搜索算法，通过计算向量之间的距离来找到最相似的向量。Milvus支持基于向量的ANN Search，包括IVF、HNSW、PQ、OPQ等。
+与精确的NN算法即Nearest Neighbor Search相比，ANN允许在寻找最近邻是稍微牺牲精度以换取更高的计算效率。这对于处理大规模数据特别重要，因为高位空间中精确搜索的计算成本非常高。
+
+Milvus支持ANN算法包括：
+
+1. IVF（Inverted File Index）： 将数据集划分为多个簇，查询时仅在相关的簇中查找，提升搜索效率。
+2. HNSW（Hierarchical Navigable Small World Graph）：一种基于图的算法，适用于高维数据的快速相似性搜索。
+3. Flat： 也称为Brute-Force Search， 即遍历整个向量空间，找到与查询向量距离最近的向量。可提供小规模数据集上的精确的最近邻搜索。
+4. ANNOY（Approximate Nearest Neighbors Oh Yeah）： 一种基于树的算法，适用于高维数据的快速相似性搜索。
+5. NSG（Navigating Spreading-out Graph）：通过优化图的接哦股，实现高效的搜索和插入操作。
