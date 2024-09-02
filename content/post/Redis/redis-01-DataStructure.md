@@ -1,5 +1,5 @@
 ---
-title: "Redis 01 Data Structure"
+title: "Redis Data Structure"
 date: 2024-08-09T14:15:48+08:00
 lastmod: 2024-08-09T14:15:48+08:00
 draft: false
