@@ -123,8 +123,8 @@ Storage：
 Storage是一整套系统，负责数据持久化。包括元数据存储，日志代理（log broker）和对象存储。
 
 1. Mate Storage： 元数据存储保存了一些数据结构的元数据快照，包括collection、schema和消息消费检查点。**元数据的存储需要非常高的可用性和强一致性并且要支持事务**，所以Milvus使用etcd来存储元数据。Milvus也使用etcd来进行服务的注册和检查。
-2. Object Storage： 对象存储保存了一些文件快照，包括日志文件、向量数据或常规数据的索引文件和间接查询数据文件等。Milvus目前使用MinIO作为对象存储。然而，对象存储在数据访问上有很高的延迟和性能损耗，为了提高其性能减少成本，Milvus计划基于内存或SSD的缓冲池来实现冷热数据的分离。
-3. Log Broker： 日志代理是一个支持重放（palyback）的发布者订阅者（pub-sub）系统。负责数据持久化传输和事件提醒。同时保证当工作者节点从系统宕机中恢复时的增量数据的完整性。Milvus集群使用Pulsar作为Log Broker。Milvus单机模式使用RocksDB作为Log Broker。此外，日志代理可以很容易的使用其他流式数据处理平台替代，比如说Kafka。
+2. Object Storage： 对象存储保存了一些**文件快照，包括日志文件、向量数据或常规数据的索引文件和间接查询数据文件**等。Milvus目前使用MinIO作为对象存储。然而，对象存储在数据访问上有很高的延迟和性能损耗，为了提高其性能减少成本，Milvus计划基于内存或SSD的缓冲池来实现冷热数据的分离。
+3. Log Broker： 日志代理是一个支持重放（palyback）的发布者订阅者（pub-sub）系统。负责数据**持久化传输和事件提醒**。同时保证当工作者节点从系统宕机中恢复时的增量数据的完整性。Milvus集群使用Pulsar作为Log Broker。Milvus单机模式使用RocksDB作为Log Broker。此外，日志代理可以很容易的使用其他流式数据处理平台替代，比如说Kafka。
 
 
 ### 集群架构
