@@ -80,3 +80,70 @@ Milvus支持ANN算法包括：
 3. Flat： 也称为Brute-Force Search， 即遍历整个向量空间，找到与查询向量距离最近的向量。可提供小规模数据集上的精确的最近邻搜索。
 4. ANNOY（Approximate Nearest Neighbors Oh Yeah）： 一种基于树的算法，适用于高维数据的快速相似性搜索。
 5. NSG（Navigating Spreading-out Graph）：通过优化图的接哦股，实现高效的搜索和插入操作。
+
+# 架构
+
+## 整体架构图
+
+![Milvus架构图](/img/random/milvus-architecture-1.png)
+
+## 主要组件
+
+### 单机模式
+
+![Milvus单机架构图](/img/random/standalone-architecture.png)
+
+Milvus单机模式包括三个组件：
+1. Milvus：核心功能模块
+2. Mate Sotre： 元数据引擎，存储和访问Milvus内部组件包括代理、索引节点等等元数据。
+3. Object Storage：存储引擎，负责Milvus等数据持久化。
+
+上图中：
+
+Cooridinator组件：
+
+1. Root Coordinator(root coord)：处理Data definition language(DDL)和Data Control language(DCL)的请求，比如创建或删除Collection、Partition、Index等。
+2. Query Coordinator(query coord)：为查询节点提供管理拓扑关系和负载均衡的能力。
+3. Data Coordinator(data coord)：管理数据节点和索引节点的拓扑学关系，维护元数据，触发数据刷新、压缩和索引重建以及其他的后台数据操作。
+
+Worker Nodes组件：
+
+工作者节点是无声的执行者，默默执行来自协作者服务（coordinator）的指令和来自代理（proxy）的Data Manipulation language（DML）命令。
+
+工作者节点得益于其存算分离的设计，是无状态且可以很容易在k8s上的进行扩容、故障恢复。
+
+工作者节点包括三种类型：
+
+1. Query Node： 查询节点通过订阅日志broker取回增长式（incremental）的日志数据，并将其转化为增长式片段（growing segments）。
+2. Data Node: 通过订阅日志broker取回增长式的日志数据，处理不同的请求并且打包日志数据为日志快照并将其存储在对象存储中。
+3. Index Node： 索引节点构建索引。索引节点不需要内存驻留，并可以通过无服务框架来实现。
+
+Storage：
+
+Storage是一整套系统，负责数据持久化。包括元数据存储，日志代理（log broker）和对象存储。
+
+1. Mate Storage： 元数据存储保存了一些数据结构的元数据快照，包括collection、schema和消息消费检查点。**元数据的存储需要非常高的可用性和强一致性并且要支持事务**，所以Milvus使用etcd来存储元数据。Milvus也使用etcd来进行服务的注册和检查。
+2. Object Storage： 对象存储保存了一些文件快照，包括日志文件、向量数据或常规数据的索引文件和间接查询数据文件等。Milvus目前使用MinIO作为对象存储。然而，对象存储在数据访问上有很高的延迟和性能损耗，为了提高其性能减少成本，Milvus计划基于内存或SSD的缓冲池来实现冷热数据的分离。
+3. Log Broker： 日志代理是一个支持重放（palyback）的发布者订阅者（pub-sub）系统。负责数据持久化传输和事件提醒。同时保证当工作者节点从系统宕机中恢复时的增长式数据的完整性。Milvus集群使用Pulsar作为Log Broker。Milvus单机模式使用RocksDB作为Log Broker。此外，日志代理可以很容易的使用其他流式数据处理平台替代，比如说Kafka。
+
+
+### 集群架构
+
+![Milvus集群架构图](/img/random/cluster-architecture.png)
+
+Milvus Cluster包含7个微服务组件和3个三方依赖。所有服务可以在k8s上进行单独的部署。
+
+微服务组件包括：
+1. Root Coordinator
+2. Query Cooordinator
+3. Data Coordinator
+4. Query Node
+5. Data Node
+6. Index Node
+7. Proxy
+
+三方依赖：
+
+1. Meta Store： 存储集群中各种组件的元数据，例如etcd。
+2. Object Storage： 负责集群中大文件的数据持久化，比如索引和二进制日志文件。使用S3/MinIO。
+3. Log Broker： 管理最近修改数据操作的日志，输出流式日志，并且提供日志发布者-订阅者服务。使用Pulsar。
