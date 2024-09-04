@@ -147,3 +147,32 @@ Milvus Cluster包含7个微服务组件和3个三方依赖。所有服务可以�
 1. Meta Store： 存储集群中各种组件的元数据，例如etcd。
 2. Object Storage： 负责集群中大文件的数据持久化，比如索引和二进制日志文件。使用S3/MinIO。
 3. Log Broker： 管理最近修改数据操作的日志，输出流式日志，并且提供日志发布者-订阅者服务。使用Pulsar。
+
+### 数据处理流程
+
+这部分包含Milvus中的数据插入、索引构建和数据查询。
+
+#### 数据插入流程
+
+在Milvus中可以为每个collection设置分片（shard）数量，每个分片对应一个虚拟通道（vchannel）。
+
+如下图所示，Milvus会为每一个vchannel在log broker中分配一个物理通道（pchannel）。
+
+所有insert/delete请求都会通过主键hash的方式路由到不同的分片。
+
+![Milvus VChannel](/img/random/milvus-channel.png)
+
+DML请求校验被移动到proxy中进行处理，因为Milvus并没有复杂的事务。
+
+![Milvus Write Log](/img/random/milvus-write-log.png)
+
+#### 索引构建流程
+
+![Milvus Index Build](/img/random/milvus-index-build.png)
+
+索引构建的过程在索引节点上执行。为了避免因为数据更新的导致的频繁的索引构建，一个collection在Milvus中被进一步分割成了segments，每一个segment对应一个索引文件。
+
+Milvus支持为每个向量字段、常规字段以及主键字段构建索引。
+
+索引构建的输入和输出都是使用对象存储进行：索引节点从对象存储中加载一个segment的日志快照（log snapshots）到内存中，反序列化相应的数据和元数据进行索引构建，当索引构建完成时序列化索引数据并将其写入对象存储中。
+
