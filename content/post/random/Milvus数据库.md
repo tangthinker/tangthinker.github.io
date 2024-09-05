@@ -44,18 +44,20 @@ Milvus是一个开源项目，使用Apache 2.0许可证。
 
 1. **硬件感知优化**： 为了提高milvus在不同环境中的性能，Milvus专门优化了在许多硬件架构和平台上的性能表现，包括AVX512、SIMD、GPUs以及NVMe SSD。
 2. **高级搜索算法**： Milvus支持广泛的in-memory和on-disk索引和搜索算法，包括IVF、HNSW、DiskANN等，所有这些算法都被深度优化过。拿FAISS和HNSWLib来说，Milvus比一般实现要更快30% - 70%。
-3. **C++搜索引擎**： 80%向量数据库的性能决定于其搜索引擎。Milvus对关键组件使用C++进行开发，因其高性能、底层优化以及高效的资源管理。最重要的是，Milvus组合使用了大量的硬件感知优化代码，从汇编层面的向量话到多线程并发和调度，尽力榨干硬件的性能潜力。
-4. **面向列（Column-Oriented）存储**：Milvus是一个Column-Oriented的向量数据库。当执行一个查询操作时，面向列的数据库只读取特定的字段，而不需要读取一整个行数据，从而大大的减少了无效数据的访问。还有就是，以列为基础的操作很容易向量化，允许一次奖操作应用到整个列上，更进一步提高了性能。
+3. **C++搜索引擎**： 80%向量数据库的性能决定于其搜索引擎。Milvus对关键组件使用C++进行开发，因其高性能、底层优化以及高效的资源管理。最重要的是，Milvus组合使用了大量的硬件感知优化代码，从汇编层面的向量化到多线程并发和调度，尽力榨干硬件的性能潜力。
+4. **面向列（Column-Oriented）存储**：Milvus是一个Column-Oriented的向量数据库。当执行一个查询操作时，面向列的数据库只读取特定的字段，而不需要读取一整个行数据，从而大大的减少了无效数据的访问。
 
 ## Milvus架构
 
-2022年，Milvus支持十亿尺度的向量，在2023年，Milvus支持千亿界别的向量并提高持续的稳定性。为300多家主要的企业提供支持，包括Paypal、Shopee、Airbnb、eBay、NVIDIA等。
+2022年，Milvus支持十亿尺度的向量，在2023年，Milvus支持千亿级别的向量并提高持续的稳定性支持。为300多家主要的企业提供支持，包括Paypal、Shopee、Airbnb、eBay、NVIDIA等。
 
 Milvus的云原生和高解藕系统架构保证了整个系统可以随着数据增长而持续扩张。
 
 ![Milvus架构图](/img/random/milvus-architecture.png)
 
-Milvus本身是完全无状态的声音可以很容易的借助Kubernetes或者公有云来进行伸缩。还有就是，Milvus的组件是解藕良好的，有三个主要的任务：搜索（search）、数据插入（data insertion）、索引/压缩（indexing/compaction），由于其逻辑上分离，这三个任务很容易的被设计成并行处理。这也保证了相关的查询节点、数据的以及索引节点可以独立的进行伸缩、性能优化以及成本优化。
+Milvus本身是完全无状态的，可以很容易的借助Kubernetes或者公有云来进行伸缩。
+
+Milvus的组件是解藕良好的，其三个主要的任务：搜索（search）、数据插入（data insertion）、索引/压缩（indexing/compaction），由于其逻辑上分离，这三个任务很容易的被设计成并行处理。这也保证了相关的查询节点、数据的以及索引节点可以独立的进行伸缩、性能优化以及成本优化。
 
 ## Milvus支持的搜索类型
 
@@ -102,25 +104,25 @@ Milvus单机模式包括三个组件：
 
 Cooridinator组件：
 
-1. Root Coordinator(root coord)：处理Data definition language(DDL)和Data Control language(DCL)的请求，比如创建或删除Collection、Partition、Index等。
-2. Query Coordinator(query coord)：为查询节点提供管理拓扑关系和负载均衡的能力。
-3. Data Coordinator(data coord)：管理数据节点和索引节点的拓扑学关系，维护元数据，触发数据刷新、压缩和索引重建以及其他的后台数据操作。
+1. Root Coordinator(root coord)：处理Data definition language(DDL)和Data Control language(DCL)的请求，**比如创建或删除Collection、Partition、Index等**。
+2. Query Coordinator(query coord)：**为查询节点提供管理拓扑关系和负载均衡的能力**。
+3. Data Coordinator(data coord)：管理数据节点和索引节点的拓扑学关系，**维护元数据，触发数据刷新、压缩和索引重建以及其他的后台数据操作**。
 
 Worker Nodes组件：
 
-工作者节点是无声的执行者，默默执行来自协作者服务（coordinator）的指令和来自代理（proxy）的Data Manipulation language（DML）命令。
+工作者节点是**无声的执行者**，默默执行来自协作者服务（coordinator）的指令和来自代理（proxy）的Data Manipulation language（DML）命令。
 
-工作者节点得益于其存算分离的设计，是无状态且可以很容易在k8s上的进行扩容、故障恢复。
+工作者节点得益于其**存算分离**的设计，是无状态且可以很容易在k8s上的进行扩容、故障恢复。
 
 工作者节点包括三种类型：
 
-1. Query Node： 查询节点通过订阅日志broker取回增长式（incremental）的日志数据，并将其转化为增长式片段（growing segments）。
-2. Data Node: 通过订阅日志broker取回增长式的日志数据，处理不同的请求并且打包日志数据为日志快照并将其存储在对象存储中。
-3. Index Node： 索引节点构建索引。索引节点不需要内存驻留，并可以通过无服务框架来实现。
+1. Query Node： 查询节点通过订阅日志broker取回**增量（incremental）的日志数据**，并将其转化为**增量片段**（growing segments）。
+2. Data Node: 通过订阅日志broker取回增长式的日志数据，**处理不同的请求并且打包日志数据为日志快照并将其存储在对象存储中**。
+3. Index Node： 索引节点**构建索引**。索引节点不需要内存驻留，并可以通过无服务框架来实现。
 
 Storage：
 
-Storage是一整套系统，负责数据持久化。包括元数据存储，日志代理（log broker）和对象存储。
+Storage是一整套系统，负责**数据持久化**。包括元数据存储，日志代理（log broker）和对象存储。
 
 1. Mate Storage： 元数据存储保存了一些数据结构的元数据快照，包括collection、schema和消息消费检查点。**元数据的存储需要非常高的可用性和强一致性并且要支持事务**，所以Milvus使用etcd来存储元数据。Milvus也使用etcd来进行服务的注册和检查。
 2. Object Storage： 对象存储保存了一些**文件快照，包括日志文件、向量数据或常规数据的索引文件和间接查询数据文件**等。Milvus目前使用MinIO作为对象存储。然而，对象存储在数据访问上有很高的延迟和性能损耗，为了提高其性能减少成本，Milvus计划基于内存或SSD的缓冲池来实现冷热数据的分离。
@@ -144,13 +146,13 @@ Milvus Cluster包含7个微服务组件和3个三方依赖。所有服务可以�
 
 三方依赖：
 
-1. Meta Store： 存储集群中各种组件的元数据，例如etcd。
-2. Object Storage： 负责集群中大文件的数据持久化，比如索引和二进制日志文件。使用S3/MinIO。
-3. Log Broker： 管理最近修改数据操作的日志，输出流式日志，并且提供日志发布者-订阅者服务。使用Pulsar。
+1. Meta Store： **存储集群中各种组件的元数据**，例如etcd。
+2. Object Storage： **负责集群中大文件的数据持久化**，比如索引和二进制日志文件。使用S3/MinIO。
+3. Log Broker： **管理最近修改数据操作的日志，输出流式日志**，并且提供日志发布者-订阅者服务。使用Pulsar。
 
 ### 数据处理流程
 
-这部分包含Milvus中的数据插入、索引构建和数据查询。
+这部分包含Milvus中的**数据插入、索引构建和数据查询**。
 
 #### 数据插入流程
 
@@ -170,9 +172,9 @@ DML请求校验被移动到proxy中进行处理，因为Milvus并没有复杂的
 
 ![Milvus Index Build](/img/random/milvus-index-build.png)
 
-索引构建的过程在索引节点上执行。为了避免因为数据更新的导致的频繁的索引构建，一个collection在Milvus中被进一步分割成了segments，每一个segment对应一个索引文件。
+索引构建的过程在索引节点上执行。为了避免因为数据更新的导致的频繁的索引构建，一个collection在Milvus中被进一步分割成了segments，每**一个segment对应一个索引文件**。
 
-Milvus支持为每个向量字段、常规字段以及主键字段构建索引。
+Milvus支持为每个**向量字段、常规字段以及主键字段**构建索引。
 
 索引构建的输入和输出都是使用对象存储进行：
 
@@ -187,15 +189,17 @@ Milvus支持为每个向量字段、常规字段以及主键字段构建索引�
 
 一个colletion会被分割成多个segments，查询节点会通过segment来加载索引。当一个搜索请求到达时，**将会广播给所有查询节点以进行并发搜索**。
 
-各个查询节点在一次查询过程中相互独立。每个节点只负责两个任务：1. 遵循Query Coord的指示加载或释放segments；2. 在本地segment上实施搜索。
+各个查询节点在一次查询过程中相互独立。每个节点只负责两个任务：
+1. 遵循Query Coord的指示加载或释放segments；
+2. 在本地segment上实施搜索。
 
 Proxy会负责将每个查询节点的搜索结果组合并最终返回给客户端。
 
+#### Handoff接力流程：
+
 ![Milvus Handoff](/img/random/milvus-handoff.png)
 
-上图：
-
-存在两种segments：
+Milvus中存在两种segments：
 1. 增量segment（因增量数据）；
 2. 历史segment。
 
