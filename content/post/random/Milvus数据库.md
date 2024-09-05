@@ -199,14 +199,14 @@ Proxy会负责将每个查询节点的搜索结果组合并最终返回给客户
 
 ![Milvus Handoff](/img/random/milvus-handoff.png)
 
-Milvus中存在两种segments：
+Milvus中存在两种增量segments：
 1. 增量segment（因增量数据）；
-2. 历史segment。
+2. 打包好的segment（即历史segment）。
 
 查询节点会订阅vchannel来接收最近的更新（增量数据）作为增量segment。
 
-当一个增量segment到达一个预先定义的阈值时，Data Coord会进行重建，索引构建的流程将会被启动。
+当一个增量segment到达一个预先定义的阈值时，Data Coord会将其打包，而且索引构建的流程将会被启动。
 
 然后上图的接力（handoff）流程就被Query Coord启动了，这个过程将会把增量数据转变为历史数据。
 
-Query Coord会将历史segment均匀的分配给所有的查询节点，根据其内存占用、CPU负载以及segment的数量进行分配。
+Query Coord会将打包好的segment均匀的分配给所有的查询节点，根据其内存占用、CPU负载以及segment的数量进行分配。
