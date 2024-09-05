@@ -83,13 +83,13 @@ Milvus支持ANN算法包括：
 4. ANNOY（Approximate Nearest Neighbors Oh Yeah）： 一种基于树的算法，适用于高维数据的快速相似性搜索。
 5. NSG（Navigating Spreading-out Graph）：通过优化图的接哦股，实现高效的搜索和插入操作。
 
-# 架构
+# 一、架构
 
-## 整体架构图
+## 1. 整体架构图
 
 ![Milvus架构图](/img/random/milvus-architecture-1.png)
 
-## 主要组件
+## 2. 主要组件
 
 ### 单机模式
 
@@ -224,7 +224,7 @@ Knowhere支持异构计算，其将控制哪些硬件（CPU或GPU）来执行向
 最底层是系统硬件。三方索引库在硬件层之上，然后Knowhere与索引节点和查询节点通过CGO进行交互。
 
 
-## 一致性
+## 3. 一致性
 
 一致性在分布式数据库中特指：
 
