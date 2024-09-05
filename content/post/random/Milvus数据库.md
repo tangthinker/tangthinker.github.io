@@ -150,11 +150,23 @@ Milvus Cluster包含7个微服务组件和3个三方依赖。所有服务可以�
 2. Object Storage： **负责集群中大文件的数据持久化**，比如索引和二进制日志文件。使用S3/MinIO。
 3. Log Broker： **管理最近修改数据操作的日志，输出流式日志**，并且提供日志发布者-订阅者服务。使用Pulsar。
 
-### 数据处理流程
+### 向量引擎 Knowhere
+
+Knowhere是Milvus的向量执行引擎，融合集中向量相似搜索库，包括Faiss、Hnswlib和Annoy。
+
+Knowhere支持异构计算，其将控制哪些硬件（CPU或GPU）来执行向量构建和搜索请求。这也是Knowhere名字的由来，知道在哪执行操作（know where）。
+
+#### Milvus架构中的Knowhere：
+
+![Milvus Knowhere](/img/random/milvus-knowhere.png)
+
+最底层是系统硬件。三方索引库在硬件层之上，然后Knowhere与索引节点和查询节点通过CGO进行交互。
+
+# 二、数据处理流程
 
 这部分包含Milvus中的**数据插入、索引构建和数据查询**。
 
-#### 数据插入流程
+## 1. 数据插入流程
 
 在Milvus中可以为每个collection设置分片（shard）数量，每个分片对应一个虚拟通道（vchannel）。
 
@@ -168,7 +180,7 @@ DML请求校验被移动到proxy中进行处理，因为Milvus并没有复杂的
 
 ![Milvus Write Log](/img/random/milvus-write-log.png)
 
-#### 索引构建流程
+## 2. 索引构建流程
 
 ![Milvus Index Build](/img/random/milvus-index-build.png)
 
@@ -181,7 +193,7 @@ Milvus支持为每个**向量字段、常规字段以及主键字段**构建索�
 索引节点从对象存储中加载一个segment的日志快照（log snapshots）到内存中，反序列化相应的数据和元数据进行索引构建，当索引构建完成时序列化索引数据并将其写入对象存储中。
 
 
-#### 数据查询流程
+## 3. 数据查询流程
 
 ![Milvus Query Process](/img/random/milvus-data-query.png)
 
@@ -195,7 +207,7 @@ Milvus支持为每个**向量字段、常规字段以及主键字段**构建索�
 
 Proxy会负责将每个查询节点的搜索结果组合并最终返回给客户端。
 
-#### Handoff接力流程：
+## 4. Handoff接力流程：
 
 ![Milvus Handoff](/img/random/milvus-handoff.png)
 
@@ -211,20 +223,8 @@ Milvus中存在两种增量segments：
 
 Query Coord会将打包好的segment均匀的分配给所有的查询节点，根据其内存占用、CPU负载以及segment的数量进行分配。
 
-### 向量引擎 Knowhere
 
-Knowhere是Milvus的向量执行引擎，融合集中向量相似搜索库，包括Faiss、Hnswlib和Annoy。
-
-Knowhere支持异构计算，其将控制哪些硬件（CPU或GPU）来执行向量构建和搜索请求。这也是Knowhere名字的由来，知道在哪执行操作（know where）。
-
-#### Milvus架构中的Knowhere：
-
-![Milvus Knowhere](/img/random/milvus-knowhere.png)
-
-最底层是系统硬件。三方索引库在硬件层之上，然后Knowhere与索引节点和查询节点通过CGO进行交互。
-
-
-## 3. 一致性
+# 三、一致性
 
 一致性在分布式数据库中特指：
 
@@ -234,7 +234,7 @@ Milvus支持4中一致性级别：**Strong、Bounded Staleness、Session、Event
 
 Milvus**默认的一致性级别为Bounded Staleness**。
 
-###  Strong级别
+## 1. Strong级别
 
 是最高也是最严苛的一致性界别，其**确保用户可以读取到数据的最新版本**。
 
@@ -242,7 +242,7 @@ Milvus**默认的一致性级别为Bounded Staleness**。
 
 Strong级别也特别**适合对数据一致性要求高的场景**，比如金融、保险、电商等。
 
-### Bounded Staleness级别
+## 2. Bounded Staleness级别
 
 Bounded Staleness意思是**数据不会陈旧，但也不能保证绝对的实时性**。
 
@@ -252,7 +252,7 @@ Bounded Staleness级别**适合那些需要把控搜索延迟并且能够接受�
 
 例如，在推荐系统中使用Bounded Staleness级别，一点点数据不一致的情况有时只会对整个召回率产生很小的影响，但是能够大幅的提升推荐系统的性能。
 
-### Session级别
+## 3. Session级别
 
 Session级别能够**确保在同一个session中的所有数据写入能够被立即读取到**。
 
@@ -260,7 +260,7 @@ Session级别能够**确保在同一个session中的所有数据写入能够被�
 
 Session级别**适合那些对同一个session中数据一致性要求特别高的场景**。
 
-### Eventual级别
+## 4. Eventual级别
 
 Eventual级别**不保证任何一致性，只保证最终一致性**。
 
@@ -272,5 +272,5 @@ Eventual级别**不保证任何一致性，只保证最终一致性**。
 
 例如，获取亚马逊上商品的评论和评分此类场景。
 
-### Milvus一致性实现原理
+## 5. Milvus一致性实现原理
 
