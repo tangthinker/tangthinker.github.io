@@ -210,3 +210,15 @@ Milvus中存在两种增量segments：
 然后上图的接力（handoff）流程就被Query Coord启动了，这个过程将会把增量数据转变为历史数据。
 
 Query Coord会将打包好的segment均匀的分配给所有的查询节点，根据其内存占用、CPU负载以及segment的数量进行分配。
+
+### 向量引擎 Knowhere
+
+Knowhere是Milvus的向量执行引擎，融合集中向量相似搜索库，包括Faiss、Hnswlib和Annoy。
+
+Knowhere支持异构计算，其将控制哪些硬件（CPU或GPU）来执行向量构建和搜索请求。这也是Knowhere名字的由来，知道在哪执行操作（know where）。
+
+#### Milvus架构中的Knowhere：
+
+![Milvus Knowhere](/img/random/milvus-knowhere.png)
+
+最底层是系统硬件。三方索引库在硬件层之上，然后Knowhere与索引节点和查询节点通过CGO进行交互。
