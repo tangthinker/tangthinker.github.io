@@ -282,5 +282,25 @@ Milvus同时是一个存算分离的系统，数据持久化负载由Data Node�
 
 Query Node和Data Node通过订阅机制消费用户插入的请求，这些数据构成了增量数据。由于存在网络延迟，在搜索请求到达时，Query Node可能尚持有最新的增量数据。
 
+在Milvus中，是**通过时间戳的方式来保障读取链路的一致性的**.
 
+如下图所示，在消息队列中插入数据时，Milvus还会不断的插入同步时间戳（Sync TS）。
 
+![Milvus TimeStamp](/img/random/milvus-timestamp-1.png)
+
+### Guarantee Timestamp
+
+当Query Node不断的从消息队列中拿到增量数据以及同步时间戳（Sync TS）时，每消费到一个Sync TS，Query Node都会将这个作为一个Service-Time。
+
+**Service-Time意味着Query Node能够看到这个时间以前的所有增量数据**。
+
+Milvus根据一致性的设置，提供了一个Guaurantee Timestamp，**用户通过指定Guarantee Timestamp来确保其一致性的需求**。
+
+![Milvus TimeStamp](/img/random/milvus-timestamp-2.png)
+
+Guarantee Timestamp的位置代表了4中一致性级别：
+
+1. Strong： GuaranteeTs设置为**系统最新时间戳，Query Nodes需要等待Service-Time推进到当前最新的时间戳才能执行当前搜索请求**。
+2. Bounded Staleness：**GuaranteeTs设置为一个比系统最新时间稍稍旧的时间**，在可容忍的范围内立刻执行查询。
+3. Session：GuaranteeTs设置为**当前session上次写入的时间戳**，能够**保障客户端立即看到自己写入的全部数据**。
+4. Eventual：GuaranteeTs设置为一个很小的值（例如0），**跳过一致性检查**，立即在已有的数据上进行Search查询。
