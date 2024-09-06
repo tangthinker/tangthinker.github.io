@@ -304,3 +304,53 @@ Guarantee Timestamp的位置代表了4中一致性级别：
 2. Bounded Staleness：**GuaranteeTs设置为一个比系统最新时间稍稍旧的时间**，在可容忍的范围内立刻执行查询。
 3. Session：GuaranteeTs设置为**当前session上次写入的时间戳**，能够**保障客户端立即看到自己写入的全部数据**。
 4. Eventual：GuaranteeTs设置为一个很小的值（例如0），**跳过一致性检查**，立即在已有的数据上进行Search查询。
+
+# 四、索引
+
+## 常规字段索引
+
+Milvus支持结合常规字段和向量字段的组合过滤搜索。为了提高常规字段的搜索效率，Milvus从2.1.0版本引入了常规字段的索引。
+
+### 概览
+
+每当执行一个向量相似度搜索时，都可以携带一个**布尔表达式（boolean expression）**来组织常规字段。
+
+当Milvus收到携带布尔表达式的搜索请求时，会将其解析为一个抽象语法树（AST），并**生成字段过滤计划**。
+
+Milvus然后会**应用过滤计划给每一个segment来生成一个位图作为过滤结果**，并**使用过滤结果作为向量搜索的输入来缩小搜索范围**。
+
+在这个角度上来说，向量搜索的速度很大程度上和过滤相关字段过滤的速度有关。
+
+常规字段**索引是一种保证字段过滤速度的手段**。
+
+![Milvus Index Build](/img/random/milvus-attribute-filtering.png)
+
+### 索引算法
+
+Milvus的目标是达成一种低内存占用、高过滤效率和极少加载时间的索引算法。
+
+在Milvus中**主要使用Inverted Index（倒排索引）来来实现**常规字段的索引。
+
+以下类型字段在创建时会**自动创建倒排索引**以加快索引速度：
+
+1. INT8、INT16、INT32、INT64
+2. FLOAT
+3. DOUBLE
+4. VARCHAR
+
+其他常规字段类型需要通过设置索引参数来手动创建索引。Milvus中索引适合**单点查询、模式匹配、全文搜索、JSON搜索、Boolean搜索甚至前缀匹配**。
+
+Milvus中**倒排索引利用Tantivy来实现**，[Tantivy](https://github.com/quickwit-oss/tantivy)是一个开源全文搜索引擎。
+
+倒排索引中有两个主要的组件：
+
+1. 词条组成的词典（term dict）
+2. 倒排列表（inverted list）
+
+词典中包含了所有根据词典表token化的词条，倒排列表中包含了每个词条对于的文档。
+
+这种设计使得单点查询和范围查询更快更高效。
+
+![Milvus Index Build](/img/random/milvus-inverted-index.png)
+
+对于**单点查询**，当你查询包含“Milvus”的文档时，首先查询这个单词在词典的位置，然后查找对应的Inverted List中包含该单词的文档。
