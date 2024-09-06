@@ -276,15 +276,15 @@ Eventual级别**不保证任何一致性，只保证最终一致性**。
 
 Milvus会为每一条进入系统的记录分配一个时间戳。
 
-Milvus同时是一个存算分离的系统，数据持久化负载由Data Node负责，最总落盘到MinIO/S3的分布式对象存储中去。
+Milvus同时是一个存算分离的系统，**数据持久化负载由Data Node负责，最总落盘到MinIO/S3的分布式对象存储中去**。
 
-在Milvus中，Search类计算任务由Query Node负责，其会同时处理两类数据（上文提到过的）：增量数据和历史数据。其中历史数据不会被更改，Search请求会看到所有历史数据。
+在Milvus中，**Search类计算任务由Query Node负责**，其会同时处理两类数据（上文提到过的）：**增量数据和历史数据**。其中历史数据不会被更改，Search请求会看到所有历史数据。
 
-Query Node和Data Node通过订阅机制消费用户插入的请求，这些数据构成了增量数据。由于存在网络延迟，在搜索请求到达时，Query Node可能尚持有最新的增量数据。
+**Query Node和Data Node通过订阅机制消费用户插入的请求**，这些数据构成了增量数据。由于存在网络延迟，在搜索请求到达时，Query Node可能尚持有最新的增量数据。
 
 在Milvus中，是**通过时间戳的方式来保障读取链路的一致性的**.
 
-如下图所示，在消息队列中插入数据时，Milvus还会不断的插入同步时间戳（Sync TS）。
+如下图所示，在消息队列中插入数据时，Milvus还会**不断的插入同步时间戳（Sync TS）**。
 
 ![Milvus TimeStamp](/img/random/milvus-timestamp-1.png)
 
